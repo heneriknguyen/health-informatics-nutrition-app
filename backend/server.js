@@ -14,12 +14,8 @@ const pool = new Pool({
   database: process.env.DB_NAME || "nutrition_app",
 });
 
-// All requests are for the single hardcoded user (id=1, seeded in init.sql)
 const USER_ID = 1;
 
-// ─── Goals Routes ─────────────────────────────────────────────────────────────
-
-// GET /api/goals
 app.get("/api/goals", async (req, res) => {
   const result = await pool.query(
     "SELECT * FROM user_goals WHERE user_id = $1",
@@ -28,7 +24,6 @@ app.get("/api/goals", async (req, res) => {
   res.json(result.rows[0] || null);
 });
 
-// PUT /api/goals  (upsert)
 app.put("/api/goals", async (req, res) => {
   const { daily_protein_goal, daily_carbs_goal, daily_fat_goal, daily_calorie_goal } = req.body;
   try {
@@ -49,9 +44,6 @@ app.put("/api/goals", async (req, res) => {
   }
 });
 
-// ─── Meal Routes ──────────────────────────────────────────────────────────────
-
-// POST /api/meals
 app.post("/api/meals", async (req, res) => {
   const { name, protein = 0, carbs = 0, fat = 0, calories = 0, date } = req.body;
   if (!name) return res.status(400).json({ error: "Meal name required" });
@@ -68,7 +60,6 @@ app.post("/api/meals", async (req, res) => {
   }
 });
 
-// GET /api/meals?date=YYYY-MM-DD
 app.get("/api/meals", async (req, res) => {
   const date = req.query.date || new Date().toISOString().split("T")[0];
   try {
@@ -85,7 +76,6 @@ app.get("/api/meals", async (req, res) => {
   }
 });
 
-// DELETE /api/meals/:id
 app.delete("/api/meals/:id", async (req, res) => {
   try {
     const result = await pool.query(
@@ -100,9 +90,6 @@ app.delete("/api/meals/:id", async (req, res) => {
   }
 });
 
-// ─── Analytics Routes ─────────────────────────────────────────────────────────
-
-// GET /api/analytics/daily-totals?days=7
 app.get("/api/analytics/daily-totals", async (req, res) => {
   const days = parseInt(req.query.days) || 7;
   try {
@@ -128,7 +115,6 @@ app.get("/api/analytics/daily-totals", async (req, res) => {
   }
 });
 
-// GET /api/analytics/feedback
 app.get("/api/analytics/feedback", async (req, res) => {
   const numDays = parseInt(req.query.days) || 7;
   try {
@@ -210,7 +196,6 @@ app.get("/api/analytics/feedback", async (req, res) => {
   }
 });
 
-// ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 
 const PORT = process.env.PORT || 4000;
