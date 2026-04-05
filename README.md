@@ -5,6 +5,12 @@ Health Informatics group project
 /client is the frontend directory
 
 
+- Link to deployed frontend: https://health-informatics-nutrition-app.onrender.com/
+- Link to Render workspace: https://dashboard.render.com/project/prj-d79ci37pm1nc73co60ng
+
+
+
+
 Database:
 - To start the database, run: docker-compose up -d (in the server directory)
 - Verify it's working by running: docker exec -it nutrition_db psql -U postgres -d nutrition_app (this is how to access the database via terminal)
