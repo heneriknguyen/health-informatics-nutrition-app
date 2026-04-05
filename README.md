@@ -24,3 +24,4 @@ PostgreSQL & pgAdmin4:
      
 Need to go to Render for deployment stuff. I sent an invite link.
 - To test backend server is good, go to: https://nutrition-app-backend-zgil.onrender.com/api/health
+- To connect to the Render database (every change will apply to everyone). Run the following command: PGPASSWORD=JJzgK31CCLlRx9OaW2ziwIrSW7Z77TPs psql -h dpg-d79coap4tr6s73crg660-a.oregon-postgres.render.com -U user nutrition_database_qw8b
