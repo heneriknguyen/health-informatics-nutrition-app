@@ -21,3 +21,6 @@ PostgreSQL & pgAdmin4:
         - Maintenance database = nutrition_app
         - Username = postgres
         - Password = password (Click the Save password)
+     
+Need to go to Render for deployment stuff. I sent an invite link.
+- To test backend server is good, go to: https://nutrition-app-backend-zgil.onrender.com/api/health
