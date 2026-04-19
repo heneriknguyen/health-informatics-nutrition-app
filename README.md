@@ -33,3 +33,8 @@ Need to go to Render for deployment stuff. I sent an invite link.
 - To connect to the Render database (every change will apply to everyone). Run the following command: PGPASSWORD=JJzgK31CCLlRx9OaW2ziwIrSW7Z77TPs psql -h dpg-d79coap4tr6s73crg660-a.oregon-postgres.render.com -U user nutrition_database_qw8b
 - This is how you reset the database, or run the init.sql file: PGPASSWORD=JJzgK31CCLlRx9OaW2ziwIrSW7Z77TPs psql -h dpg-d79coap4tr6s73crg660-a.oregon-postgres.render.com -U user -d nutrition_database_qw8b -f init.sql
   - TODO: need to create different logins for different users so that we don't all have the same data.
+
+
+To start frontend locally: (in frontend folder)
+- npm run build
+- npm run dev 
