@@ -139,49 +139,64 @@ app.get("/api/analytics/feedback", async (req, res) => {
     const rows  = totalsRes.rows;
     const feedback = [];
 
-    if (!goals || rows.length === 0) {
+    const hasAnyGoal = goals && (
+      goals.daily_protein_goal != null ||
+      goals.daily_carbs_goal   != null ||
+      goals.daily_fat_goal     != null ||
+      goals.daily_calorie_goal != null
+    );
+
+    if (!hasAnyGoal || rows.length === 0) {
       return res.json({
         feedback: ["Log at least a week of meals and set your goals to receive personalized feedback."],
       });
     }
 
-    const lowProteinDays = rows.filter(
-      (d) => Number(d.protein) < goals.daily_protein_goal * 0.8
-    ).length;
-    if (lowProteinDays >= 3) {
-      feedback.push(
-        `You missed your protein goal on ${lowProteinDays} of the last ${rows.length} days. Try adding eggs, Greek yogurt, or lean meat to your meals.`
-      );
+    if (goals.daily_protein_goal != null) {
+      const lowProteinDays = rows.filter(
+        (d) => Number(d.protein) < goals.daily_protein_goal * 0.8
+      ).length;
+      if (lowProteinDays >= 3) {
+        feedback.push(
+          `You missed your protein goal on ${lowProteinDays} of the last ${rows.length} days. Try adding eggs, Greek yogurt, or lean meat to your meals.`
+        );
+      }
     }
 
-    const highCarbDays = rows.filter(
-      (d) => Number(d.carbs) > goals.daily_carbs_goal * 1.2
-    ).length;
-    if (highCarbDays >= 3) {
-      feedback.push(
-        `Your carbohydrate intake exceeded your goal on ${highCarbDays} days recently. Consider swapping refined carbs for vegetables or legumes.`
-      );
+    if (goals.daily_carbs_goal != null) {
+      const highCarbDays = rows.filter(
+        (d) => Number(d.carbs) > goals.daily_carbs_goal * 1.2
+      ).length;
+      if (highCarbDays >= 3) {
+        feedback.push(
+          `Your carbohydrate intake exceeded your goal on ${highCarbDays} days recently. Consider swapping refined carbs for vegetables or legumes.`
+        );
+      }
     }
 
-    const avgCalories =
-      rows.reduce((sum, d) => sum + Number(d.calories), 0) / rows.length;
-    if (avgCalories > goals.daily_calorie_goal * 1.1) {
-      feedback.push(
-        `Your average daily calorie intake (${Math.round(avgCalories)} kcal) is above your goal. Try reducing portion sizes or high-calorie snacks.`
-      );
-    } else if (avgCalories < goals.daily_calorie_goal * 0.8) {
-      feedback.push(
-        `You're averaging ${Math.round(avgCalories)} kcal/day, which is well below your goal. Ensure you're eating enough to fuel your body.`
-      );
+    if (goals.daily_calorie_goal != null) {
+      const avgCalories =
+        rows.reduce((sum, d) => sum + Number(d.calories), 0) / rows.length;
+      if (avgCalories > goals.daily_calorie_goal * 1.1) {
+        feedback.push(
+          `Your average daily calorie intake (${Math.round(avgCalories)} kcal) is above your goal. Try reducing portion sizes or high-calorie snacks.`
+        );
+      } else if (avgCalories < goals.daily_calorie_goal * 0.8) {
+        feedback.push(
+          `You're averaging ${Math.round(avgCalories)} kcal/day, which is well below your goal. Ensure you're eating enough to fuel your body.`
+        );
+      }
     }
 
-    const highFatDays = rows.filter(
-      (d) => Number(d.fat) > goals.daily_fat_goal * 1.3
-    ).length;
-    if (highFatDays >= 3) {
-      feedback.push(
-        `Fat intake exceeded 130% of your goal on ${highFatDays} days. Consider reducing fried foods or high-fat dairy.`
-      );
+    if (goals.daily_fat_goal != null) {
+      const highFatDays = rows.filter(
+        (d) => Number(d.fat) > goals.daily_fat_goal * 1.3
+      ).length;
+      if (highFatDays >= 3) {
+        feedback.push(
+          `Fat intake exceeded 130% of your goal on ${highFatDays} days. Consider reducing fried foods or high-fat dairy.`
+        );
+      }
     }
 
     if (feedback.length === 0) {

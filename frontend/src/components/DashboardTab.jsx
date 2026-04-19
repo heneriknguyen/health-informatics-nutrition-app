@@ -90,9 +90,10 @@ export default function DashboardTab() {
           Nutrition for {dateLabel}
         </h3>
         <div className="macro-grid">
-          {["protein", "carbs", "fat", "calories"].map(k => (
-            <MacroBar key={k} macroKey={k} value={totals[k]} goal={goals?.[`daily_${k}_goal`]} />
-          ))}
+          {["protein", "carbs", "fat", "calories"].map(k => {
+            const goalKey = k === "calories" ? "daily_calorie_goal" : `daily_${k}_goal`;
+            return <MacroBar key={k} macroKey={k} value={totals[k]} goal={goals?.[goalKey]} />;
+          })}
         </div>
       </div>
 
