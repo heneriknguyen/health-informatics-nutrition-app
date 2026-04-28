@@ -34,6 +34,7 @@ Need to go to Render for deployment stuff. I sent an invite link.
 - This is how you reset the database, or run the init.sql file: PGPASSWORD=JJzgK31CCLlRx9OaW2ziwIrSW7Z77TPs psql -h dpg-d79coap4tr6s73crg660-a.oregon-postgres.render.com -U user -d nutrition_database_qw8b -f init.sql
   - TODO: need to create different logins for different users so that we don't all have the same data.
 
+- new database 4/27/2026: PGPASSWORD=S4JrNck7cMkoEGY7iuAWepKi5qPNqX9b psql -h dpg-d7o1ogpo3t8c73f0t7eg-a.oregon-postgres.render.com -U user nutrition_database_aj6n
 
 To start frontend locally: (in frontend folder)
 - npm run build
