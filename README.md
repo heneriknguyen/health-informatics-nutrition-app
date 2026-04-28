@@ -36,6 +36,8 @@ Need to go to Render for deployment stuff. I sent an invite link.
 
 - new database 4/27/2026: PGPASSWORD=S4JrNck7cMkoEGY7iuAWepKi5qPNqX9b psql -h dpg-d7o1ogpo3t8c73f0t7eg-a.oregon-postgres.render.com -U user nutrition_database_aj6n
 
+- For database stuff, we need hard to code initialization and change ENVIRONMENT in the backend service to have the correct POSTGRES URL.
+
 To start frontend locally: (in frontend folder)
 - npm run build
 - npm run dev 
