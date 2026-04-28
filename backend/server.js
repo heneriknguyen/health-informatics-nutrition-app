@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
@@ -8,22 +10,86 @@ app.use(express.json());
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // required for Render Postgres
-  },
+  ssl: { rejectUnauthorized: false },
 });
 
-const USER_ID = 1;
+const JWT_SECRET = process.env.JWT_SECRET || "change_me_in_production";
+const SALT_ROUNDS = 10;
 
-app.get("/api/goals", async (req, res) => {
+// ─── Auth Middleware ──────────────────────────────────────────────────────────
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Missing or invalid token" });
+  }
+  const token = authHeader.slice(7);
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.userId = payload.userId;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Token expired or invalid" });
+  }
+}
+
+// ─── Auth Routes ──────────────────────────────────────────────────────────────
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password)
+    return res.status(400).json({ error: "Name, email, and password are required" });
+  if (password.length < 6)
+    return res.status(400).json({ error: "Password must be at least 6 characters" });
+
+  try {
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email.toLowerCase()]);
+    if (existing.rows.length)
+      return res.status(409).json({ error: "An account with that email already exists" });
+
+    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+    const result = await pool.query(
+      "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email",
+      [name.trim(), email.toLowerCase(), password_hash]
+    );
+    const user = result.rows[0];
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "30d" });
+    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email and password are required" });
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email.toLowerCase()]);
+    const user = result.rows[0];
+    if (!user) return res.status(401).json({ error: "Invalid email or password" });
+
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) return res.status(401).json({ error: "Invalid email or password" });
+
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "30d" });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ─── Protected Routes (all use req.userId from JWT) ──────────────────────────
+app.get("/api/goals", requireAuth, async (req, res) => {
   const result = await pool.query(
     "SELECT * FROM user_goals WHERE user_id = $1",
-    [USER_ID]
+    [req.userId]
   );
   res.json(result.rows[0] || null);
 });
 
-app.put("/api/goals", async (req, res) => {
+app.put("/api/goals", requireAuth, async (req, res) => {
   const { daily_protein_goal, daily_carbs_goal, daily_fat_goal, daily_calorie_goal } = req.body;
   try {
     const result = await pool.query(
@@ -35,7 +101,7 @@ app.put("/api/goals", async (req, res) => {
              daily_fat_goal     = $4,
              daily_calorie_goal = $5
        RETURNING *`,
-      [USER_ID, daily_protein_goal, daily_carbs_goal, daily_fat_goal, daily_calorie_goal]
+      [req.userId, daily_protein_goal, daily_carbs_goal, daily_fat_goal, daily_calorie_goal]
     );
     res.json(result.rows[0]);
   } catch {
@@ -43,7 +109,7 @@ app.put("/api/goals", async (req, res) => {
   }
 });
 
-app.post("/api/meals", async (req, res) => {
+app.post("/api/meals", requireAuth, async (req, res) => {
   const { name, protein = 0, carbs = 0, fat = 0, calories = 0, date } = req.body;
   if (!name) return res.status(400).json({ error: "Meal name required" });
   try {
@@ -51,7 +117,7 @@ app.post("/api/meals", async (req, res) => {
     const result = await pool.query(
       `INSERT INTO meals (user_id, name, protein, carbs, fat, calories, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [USER_ID, name, protein, carbs, fat, calories, createdAt]
+      [req.userId, name, protein, carbs, fat, calories, createdAt]
     );
     res.status(201).json(result.rows[0]);
   } catch {
@@ -59,7 +125,7 @@ app.post("/api/meals", async (req, res) => {
   }
 });
 
-app.get("/api/meals", async (req, res) => {
+app.get("/api/meals", requireAuth, async (req, res) => {
   const date = req.query.date || new Date().toISOString().split("T")[0];
   try {
     const result = await pool.query(
@@ -67,7 +133,7 @@ app.get("/api/meals", async (req, res) => {
        WHERE user_id = $1
          AND DATE(created_at AT TIME ZONE 'UTC') = $2
        ORDER BY created_at ASC`,
-      [USER_ID, date]
+      [req.userId, date]
     );
     res.json(result.rows);
   } catch {
@@ -75,11 +141,11 @@ app.get("/api/meals", async (req, res) => {
   }
 });
 
-app.delete("/api/meals/:id", async (req, res) => {
+app.delete("/api/meals/:id", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       "DELETE FROM meals WHERE id = $1 AND user_id = $2 RETURNING id",
-      [req.params.id, USER_ID]
+      [req.params.id, req.userId]
     );
     if (!result.rows.length)
       return res.status(404).json({ error: "Meal not found" });
@@ -89,7 +155,7 @@ app.delete("/api/meals/:id", async (req, res) => {
   }
 });
 
-app.get("/api/analytics/daily-totals", async (req, res) => {
+app.get("/api/analytics/daily-totals", requireAuth, async (req, res) => {
   const days = parseInt(req.query.days) || 7;
   try {
     const result = await pool.query(
@@ -105,7 +171,7 @@ app.get("/api/analytics/daily-totals", async (req, res) => {
              BETWEEN CURRENT_DATE - ($2::int - 1) AND CURRENT_DATE
        GROUP BY DATE(created_at AT TIME ZONE 'UTC')
        ORDER BY day ASC`,
-      [USER_ID, days]
+      [req.userId, days]
     );
     res.json(result.rows);
   } catch (err) {
@@ -114,11 +180,11 @@ app.get("/api/analytics/daily-totals", async (req, res) => {
   }
 });
 
-app.get("/api/analytics/feedback", async (req, res) => {
+app.get("/api/analytics/feedback", requireAuth, async (req, res) => {
   const numDays = parseInt(req.query.days) || 7;
   try {
     const [goalsRes, totalsRes] = await Promise.all([
-      pool.query("SELECT * FROM user_goals WHERE user_id = $1", [USER_ID]),
+      pool.query("SELECT * FROM user_goals WHERE user_id = $1", [req.userId]),
       pool.query(
         `SELECT
            DATE(created_at AT TIME ZONE 'UTC')::text AS day,
@@ -131,7 +197,7 @@ app.get("/api/analytics/feedback", async (req, res) => {
            AND DATE(created_at AT TIME ZONE 'UTC')
                BETWEEN CURRENT_DATE - ($2::int - 1) AND CURRENT_DATE
          GROUP BY DATE(created_at AT TIME ZONE 'UTC')`,
-        [USER_ID, numDays]
+        [req.userId, numDays]
       ),
     ]);
 
@@ -200,7 +266,7 @@ app.get("/api/analytics/feedback", async (req, res) => {
     }
 
     if (feedback.length === 0) {
-      feedback.push("Great work! Your macros are well-balanced over the past two weeks. Keep it up!");
+      feedback.push("Great work! Your macros are well-balanced. Keep it up!");
     }
 
     res.json({ feedback });

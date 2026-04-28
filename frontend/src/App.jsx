@@ -4,6 +4,8 @@ import "./styles/macros.css";
 import "./styles/meals.css";
 import "./styles/analytics.css";
 import "./styles/goals.css";
+import { getUser, clearSession } from "./api";
+import AuthPage    from "./components/AuthPage";
 import DashboardTab from "./components/DashboardTab";
 import AnalyticsTab from "./components/AnalyticsTab";
 import GoalsTab     from "./components/GoalsTab";
@@ -19,7 +21,22 @@ function todayString() {
 }
 
 export default function App() {
-  const [tab, setTab] = useState("dashboard");
+  const [user, setUser] = useState(() => getUser());
+  const [tab, setTab]   = useState("dashboard");
+
+  function handleAuth(u) {
+    setUser(u);
+    setTab("dashboard");
+  }
+
+  function handleLogout() {
+    clearSession();
+    setUser(null);
+  }
+
+  if (!user) {
+    return <AuthPage onAuth={handleAuth} />;
+  }
 
   return (
     <>
@@ -33,7 +50,24 @@ export default function App() {
           </div>
           <div className="header-title">Nutri<span>Track</span></div>
         </div>
-        <div className="header-date-pill">{todayString()}</div>
+
+        <div className="header-right">
+          <div className="header-date-pill">{todayString()}</div>
+          <div className="header-user">
+            <div className="header-avatar">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <span className="header-username">{user.name}</span>
+          </div>
+          <button className="logout-btn" onClick={handleLogout} title="Log out">
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+              <path d="M7 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M13 14l3-4-3-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M16 10H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            <span>Log out</span>
+          </button>
+        </div>
       </div>
 
       <div className="main">

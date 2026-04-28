@@ -1,7 +1,33 @@
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
-export async function api(path, { method = "GET", body } = {}) {
+export function getToken() {
+  return localStorage.getItem("nt_token");
+}
+
+export function getUser() {
+  try {
+    return JSON.parse(localStorage.getItem("nt_user") || "null");
+  } catch {
+    return null;
+  }
+}
+
+export function saveSession(token, user) {
+  localStorage.setItem("nt_token", token);
+  localStorage.setItem("nt_user", JSON.stringify(user));
+}
+
+export function clearSession() {
+  localStorage.removeItem("nt_token");
+  localStorage.removeItem("nt_user");
+}
+
+export async function api(path, { method = "GET", body, auth = true } = {}) {
   const headers = { "Content-Type": "application/json" };
+  if (auth) {
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
   const res = await fetch(BASE + path, {
     method,
     headers,
