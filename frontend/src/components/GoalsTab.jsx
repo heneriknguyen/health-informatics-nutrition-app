@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { api } from "../api";
 
 const FIELDS = [
-  { key: "daily_protein_goal",  label: "Protein",  unit: "g",    color: "var(--protein-fg)", bg: "var(--protein-bg)", border: "var(--green-mid)",  placeholder: "150",  tip: "Aim for ~0.8–1g per lb of body weight" },
-  { key: "daily_carbs_goal",    label: "Carbs",    unit: "g",    color: "var(--carbs-fg)",   bg: "var(--carbs-bg)",   border: "var(--blue-mid)",   placeholder: "200",  tip: "Your main energy source" },
-  { key: "daily_fat_goal",      label: "Fat",      unit: "g",    color: "var(--fat-fg)",     bg: "var(--fat-bg)",     border: "var(--amber-mid)",  placeholder: "65",   tip: "Healthy fats support brain and heart" },
-  { key: "daily_calorie_goal",  label: "Calories", unit: "kcal", color: "var(--cal-fg)",     bg: "var(--cal-bg)",     border: "var(--coral-mid)",  placeholder: "2000", tip: "Based on your activity level" },
+  { key: "daily_protein_goal",  label: "Protein",  unit: "g",    color: "var(--protein-fg)", bg: "var(--protein-bg)", border: "var(--green-mid)",  placeholder: "150" },
+  { key: "daily_carbs_goal",    label: "Carbs",    unit: "g",    color: "var(--carbs-fg)",   bg: "var(--carbs-bg)",   border: "var(--blue-mid)",   placeholder: "200" },
+  { key: "daily_fat_goal",      label: "Fat",      unit: "g",    color: "var(--fat-fg)",     bg: "var(--fat-bg)",     border: "var(--amber-mid)",  placeholder: "65" },
+  { key: "daily_calorie_goal",  label: "Calories", unit: "kcal", color: "var(--cal-fg)",     bg: "var(--cal-bg)",     border: "var(--coral-mid)",  placeholder: "2000" },
 ];
 
 export default function GoalsTab() {
